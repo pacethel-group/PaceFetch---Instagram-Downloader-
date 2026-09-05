@@ -1,1399 +1,1111 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>PaceFetch — Instagram Downloader</title>
-
-    <meta
-        name="description"
-        content="PaceFetch — fast Instagram video and photo downloader."
-    >
-
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        :root {
-            --bg: #070709;
-            --card: #111116;
-            --text: #ffffff;
-            --muted: #96969f;
-            --border: rgba(255,255,255,.09);
-            --accent: #ff3159;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            min-height: 100vh;
-            background:
-                radial-gradient(
-                    circle at 50% -10%,
-                    rgba(255,45,85,.15),
-                    transparent 38%
-                ),
-                var(--bg);
-
-            color: var(--text);
-
-            font-family:
-                Inter,
-                system-ui,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
-        }
-
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-
-            background-image:
-                linear-gradient(
-                    rgba(255,255,255,.018) 1px,
-                    transparent 1px
-                ),
-                linear-gradient(
-                    90deg,
-                    rgba(255,255,255,.018) 1px,
-                    transparent 1px
-                );
-
-            background-size: 50px 50px;
-
-            mask-image:
-                linear-gradient(
-                    to bottom,
-                    black,
-                    transparent 80%
-                );
-        }
-
-        .page {
-            min-height: 100vh;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* NAVBAR */
-
-        .navbar {
-            width: min(1120px, calc(100% - 40px));
-            height: 82px;
-            margin: auto;
-
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            border-bottom: 1px solid var(--border);
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-
-            color: white;
-            text-decoration: none;
-
-            font-size: 20px;
-            font-weight: 800;
-        }
-
-        .brand-icon {
-            width: 36px;
-            height: 36px;
-
-            display: grid;
-            place-items: center;
-
-            border-radius: 11px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #ffdc80,
-                    #fcaf45 25%,
-                    #f77737 45%,
-                    #e1306c 65%,
-                    #c13584 80%,
-                    #833ab4
-                );
-
-            font-weight: 900;
-
-            box-shadow:
-                0 8px 25px rgba(225,48,108,.25);
-        }
-
-        .instagram-only {
-            padding: 8px 13px;
-
-            border: 1px solid var(--border);
-            border-radius: 100px;
-
-            background: rgba(255,255,255,.035);
-
-            color: #bdbdc6;
-
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        /* HERO */
-
-        .hero {
-            width: min(900px, calc(100% - 40px));
-
-            margin: 105px auto 0;
-
-            text-align: center;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-
-            margin-bottom: 25px;
-            padding: 8px 13px;
-
-            border: 1px solid rgba(255,45,85,.25);
-            border-radius: 100px;
-
-            background: rgba(255,45,85,.07);
-
-            color: #ff8ca4;
-
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .dot {
-            width: 7px;
-            height: 7px;
-
-            border-radius: 50%;
-
-            background: #ff3b63;
-
-            box-shadow:
-                0 0 12px #ff3b63;
-        }
-
-        h1 {
-            max-width: 850px;
-            margin: auto;
-
-            font-size: clamp(48px, 8vw, 88px);
-            line-height: .98;
-
-            letter-spacing: -5px;
-            font-weight: 900;
-        }
-
-        h1 span {
-            display: block;
-
-            background:
-                linear-gradient(
-                    90deg,
-                    #ffb067,
-                    #ff4675,
-                    #c57cff
-                );
-
-            -webkit-background-clip: text;
-            background-clip: text;
-
-            color: transparent;
-        }
-
-        .subtitle {
-            max-width: 600px;
-
-            margin: 28px auto 40px;
-
-            color: var(--muted);
-
-            font-size: 17px;
-            line-height: 1.65;
-        }
-
-        /* DOWNLOAD BOX */
-
-        .download-card {
-            width: min(720px, 100%);
-
-            margin: auto;
-            padding: 9px;
-
-            display: flex;
-            gap: 9px;
-
-            border: 1px solid rgba(255,255,255,.11);
-            border-radius: 18px;
-
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(255,255,255,.065),
-                    rgba(255,255,255,.025)
-                );
-
-            box-shadow:
-                0 30px 90px rgba(0,0,0,.45);
-        }
-
-        .input-wrapper {
-            flex: 1;
-            min-width: 0;
-
-            height: 58px;
-
-            display: flex;
-            align-items: center;
-
-            padding: 0 16px;
-
-            background: #0c0c10;
-
-            border: 1px solid var(--border);
-            border-radius: 12px;
-        }
-
-        .link-icon {
-            margin-right: 10px;
-
-            color: #777780;
-
-            font-size: 21px;
-        }
-
-        #urlInput {
-            flex: 1;
-            width: 100%;
-
-            border: none;
-            outline: none;
-
-            background: transparent;
-
-            color: white;
-
-            font-size: 15px;
-        }
-
-        #urlInput::placeholder {
-            color: #65656d;
-        }
-
-        .clear-btn {
-            display: none;
-
-            border: none;
-            background: transparent;
-
-            color: #777780;
-
-            font-size: 23px;
-
-            cursor: pointer;
-        }
-
-        .download-btn {
-            min-width: 155px;
-            height: 58px;
-
-            border: none;
-            border-radius: 12px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #ff3159,
-                    #e82c71
-                );
-
-            color: white;
-
-            font-size: 15px;
-            font-weight: 800;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 9px;
-
-            cursor: pointer;
-
-            box-shadow:
-                0 10px 35px rgba(255,45,85,.25);
-
-            transition: .2s ease;
-        }
-
-        .download-btn:hover {
-            transform: translateY(-2px);
-
-            box-shadow:
-                0 15px 40px rgba(255,45,85,.36);
-        }
-
-        .download-btn:active {
-            transform: scale(.98);
-        }
-
-        .download-btn.loading {
-            opacity: .7;
-            pointer-events: none;
-        }
-
-        .message {
-            min-height: 25px;
-
-            margin-top: 15px;
-
-            font-size: 13px;
-
-            color: #a9a9b1;
-        }
-
-        .message.error {
-            color: #ff7389;
-        }
-
-        .message.success {
-            color: #70e2a4;
-        }
-
-        .supported {
-            width: min(720px, 100%);
-
-            margin: 18px auto 0;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            gap: 11px;
-
-            color: #777780;
-
-            font-size: 12px;
-        }
-
-        .supported strong {
-            display: block;
-
-            margin-bottom: 2px;
-
-            color: #aaaab2;
-        }
-
-        .supported span {
-            display: block;
-        }
-
-        .support-icon {
-            width: 32px;
-            height: 32px;
-
-            display: grid;
-            place-items: center;
-
-            border-radius: 9px;
-
-            background: rgba(255,255,255,.05);
-
-            color: #aaaab2;
-
-            font-size: 18px;
-        }
-
-        /* FEATURES */
-
-        .features {
-            width: min(1000px, calc(100% - 40px));
-
-            margin: 120px auto 0;
-
-            display: grid;
-            grid-template-columns: repeat(3,1fr);
-
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .feature {
-            padding: 34px 30px;
-
-            display: flex;
-            gap: 18px;
-        }
-
-        .feature + .feature {
-            border-left: 1px solid var(--border);
-        }
-
-        .feature-number {
-            color: #55555e;
-
-            font-size: 12px;
-            font-weight: 800;
-        }
-
-        .feature h3 {
-            margin-bottom: 8px;
-
-            font-size: 15px;
-        }
-
-        .feature p {
-            color: #777780;
-
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        /* HOW */
-
-        .how-section {
-            width: min(800px, calc(100% - 40px));
-
-            margin: 120px auto;
-
-            text-align: center;
-        }
-
-        .section-label {
-            margin-bottom: 18px;
-
-            color: #777780;
-
-            font-size: 11px;
-            font-weight: 800;
-
-            letter-spacing: 2px;
-        }
-
-        .how-section h2 {
-            margin-bottom: 16px;
-
-            font-size: clamp(32px,5vw,52px);
-
-            letter-spacing: -2px;
-        }
-
-        .how-section p {
-            color: var(--muted);
-
-            line-height: 1.7;
-        }
-
-        /* FOOTER */
-
-        footer {
-            width: min(1120px, calc(100% - 40px));
-
-            margin: auto;
-            padding: 28px 0;
-
-            display: flex;
-            justify-content: space-between;
-
-            border-top: 1px solid var(--border);
-
-            color: #55555e;
-
-            font-size: 11px;
-        }
-
-        /* MOBILE */
-
-        @media (max-width: 700px) {
-
-            .navbar {
-                height: 70px;
-            }
-
-            .instagram-only {
-                display: none;
-            }
-
-            .hero {
-                margin-top: 75px;
-            }
-
-            h1 {
-                letter-spacing: -3px;
-            }
-
-            .subtitle {
-                font-size: 15px;
-            }
-
-            .download-card {
-                flex-direction: column;
-            }
-
-            .download-btn {
-                width: 100%;
-            }
-
-            .features {
-                grid-template-columns: 1fr;
-
-                margin-top: 80px;
-            }
-
-            .feature {
-                padding: 25px 20px;
-            }
-
-            .feature + .feature {
-                border-left: none;
-                border-top: 1px solid var(--border);
-            }
-
-            .how-section {
-                margin: 85px auto;
-            }
-
-            footer {
-                flex-direction: column;
-                gap: 8px;
-            }
-        }
-    </style>
-</head>
-
-
-<body>
-
-<div class="page">
-
-    <header class="navbar">
-
-        <a href="/" class="brand">
-
-            <span class="brand-icon">
-                P
-            </span>
-
-            <span>
-                PaceFetch
-            </span>
-
-        </a>
-
-        <span class="instagram-only">
-            Instagram Only
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#08080c"><title>PaceFetch — Instagram Downloader</title><style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+:root{
+    --bg:#08080c;
+    --card:#111116;
+    --card2:#17171e;
+    --border:rgba(255,255,255,.09);
+    --text:#fff;
+    --muted:#92929d;
+    --pink:#ff315d;
+    --purple:#a855f7;
+    --green:#46d98a;
+}
+
+body{
+    min-height:100vh;
+    background:
+        radial-gradient(
+            circle at 50% -10%,
+            rgba(255,49,93,.18),
+            transparent 35%
+        ),
+        var(--bg);
+    color:var(--text);
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+button,
+input{
+    font:inherit;
+}
+
+button{
+    cursor:pointer;
+}
+
+.container{
+    width:min(900px,calc(100% - 28px));
+    margin:auto;
+}
+
+/* NAV */
+
+.nav{
+    height:72px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid var(--border);
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    text-decoration:none;
+    color:#fff;
+}
+
+.logo{
+    width:39px;
+    height:39px;
+    border-radius:12px;
+    display:grid;
+    place-items:center;
+    background:
+        linear-gradient(
+            135deg,
+            #ffdc80,
+            #fcaf45,
+            #f77737,
+            #e1306c,
+            #c13584,
+            #833ab4
+        );
+}
+
+.logo svg{
+    width:23px;
+    height:23px;
+    fill:none;
+    stroke:#fff;
+    stroke-width:1.8;
+}
+
+.brand-name{
+    font-size:20px;
+    font-weight:900;
+    letter-spacing:-.7px;
+}
+
+.badge{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 11px;
+    border:1px solid var(--border);
+    border-radius:100px;
+    color:#96969f;
+    font-size:10px;
+    font-weight:800;
+}
+
+.badge-dot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--green);
+}
+
+/* HERO */
+
+.hero{
+    text-align:center;
+    padding:85px 0 50px;
+}
+
+.eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:8px 12px;
+    border-radius:100px;
+    border:1px solid rgba(255,49,93,.22);
+    background:rgba(255,49,93,.06);
+    color:#ff8ca6;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.8px;
+    margin-bottom:23px;
+}
+
+.eyebrow svg{
+    width:14px;
+    height:14px;
+}
+
+h1{
+    font-size:clamp(45px,9vw,78px);
+    line-height:.96;
+    letter-spacing:-5px;
+    font-weight:950;
+}
+
+.gradient{
+    display:block;
+    background:
+        linear-gradient(
+            90deg,
+            #ffb36a,
+            #ff4778,
+            #b878ff
+        );
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+}
+
+.subtitle{
+    max-width:570px;
+    margin:25px auto 34px;
+    color:var(--muted);
+    line-height:1.7;
+    font-size:15px;
+}
+
+/* DOWNLOADER */
+
+.downloader{
+    width:min(760px,100%);
+    margin:auto;
+}
+
+.input-card{
+    padding:8px;
+    display:flex;
+    gap:8px;
+    border:1px solid rgba(255,255,255,.13);
+    border-radius:20px;
+    background:rgba(255,255,255,.035);
+    box-shadow:0 30px 90px rgba(0,0,0,.45);
+}
+
+.input-box{
+    height:59px;
+    flex:1;
+    min-width:0;
+    display:flex;
+    align-items:center;
+    padding:0 14px;
+    border:1px solid var(--border);
+    border-radius:13px;
+    background:#0c0c11;
+}
+
+.ig-icon{
+    flex:0 0 auto;
+    width:22px;
+    height:22px;
+    margin-right:9px;
+}
+
+.ig-icon svg{
+    width:100%;
+    height:100%;
+}
+
+#url{
+    width:100%;
+    height:100%;
+    border:none;
+    outline:none;
+    background:transparent;
+    color:#fff;
+    font-size:14px;
+}
+
+#url::placeholder{
+    color:#5d5d67;
+}
+
+.paste{
+    border:0;
+    background:none;
+    color:#8e8e98;
+    font-size:11px;
+    font-weight:800;
+    padding:8px;
+}
+
+.download{
+    width:155px;
+    height:59px;
+    border:0;
+    border-radius:13px;
+    background:
+        linear-gradient(
+            135deg,
+            #ff315d,
+            #e72d70
+        );
+    color:white;
+    font-size:13px;
+    font-weight:900;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    box-shadow:0 12px 35px rgba(255,49,93,.22);
+    transition:.2s;
+}
+
+.download:hover{
+    transform:translateY(-2px);
+}
+
+.download:active{
+    transform:scale(.98);
+}
+
+.download svg{
+    width:18px;
+    height:18px;
+}
+
+/* STATUS */
+
+.status{
+    min-height:26px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:10px;
+    color:#64646e;
+    font-size:11px;
+}
+
+.status.valid{
+    color:var(--green);
+}
+
+.status.invalid{
+    color:#ff6878;
+}
+
+/* RESULT */
+
+.result{
+    display:none;
+    margin-top:25px;
+    text-align:left;
+    border:1px solid var(--border);
+    border-radius:20px;
+    overflow:hidden;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,.055),
+            rgba(255,255,255,.02)
+        );
+    animation:appear .35s ease;
+}
+
+.result.show{
+    display:block;
+}
+
+@keyframes appear{
+    from{
+        opacity:0;
+        transform:translateY(10px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.result-main{
+    padding:17px;
+    display:flex;
+    gap:15px;
+}
+
+.thumbnail{
+    width:135px;
+    height:135px;
+    flex:0 0 135px;
+    border-radius:13px;
+    overflow:hidden;
+    background:#09090d;
+}
+
+.thumbnail img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.thumbnail.empty{
+    display:grid;
+    place-items:center;
+    color:#44444d;
+}
+
+.thumbnail.empty svg{
+    width:40px;
+    height:40px;
+}
+
+.info{
+    min-width:0;
+    flex:1;
+}
+
+.ready{
+    color:var(--green);
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:1px;
+    margin:5px 0 8px;
+}
+
+.title{
+    font-size:17px;
+    font-weight:850;
+    line-height:1.3;
+    margin-bottom:13px;
+    word-break:break-word;
+}
+
+.meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+}
+
+.meta span{
+    padding:6px 8px;
+    border:1px solid var(--border);
+    border-radius:7px;
+    background:rgba(255,255,255,.03);
+    color:#85858f;
+    font-size:9px;
+}
+
+/* FORMAT */
+
+.format{
+    padding:0 17px 17px;
+}
+
+.format-label{
+    color:#686871;
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:1px;
+    margin-bottom:8px;
+}
+
+.format-card{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:rgba(0,0,0,.18);
+}
+
+.format-icon{
+    width:38px;
+    height:38px;
+    display:grid;
+    place-items:center;
+    border-radius:10px;
+    background:rgba(255,49,93,.08);
+    color:#ff5275;
+}
+
+.format-icon svg{
+    width:19px;
+    height:19px;
+}
+
+.format-info{
+    flex:1;
+}
+
+.format-name{
+    font-size:12px;
+    font-weight:850;
+}
+
+.format-desc{
+    margin-top:3px;
+    color:#686871;
+    font-size:9px;
+}
+
+.save{
+    height:38px;
+    padding:0 13px;
+    border:0;
+    border-radius:9px;
+    background:#fff;
+    color:#08080c;
+    font-size:10px;
+    font-weight:900;
+}
+
+/* FEATURES */
+
+.features{
+    margin-top:70px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    border-top:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+}
+
+.feature{
+    padding:28px 22px;
+    display:flex;
+    gap:13px;
+}
+
+.feature + .feature{
+    border-left:1px solid var(--border);
+}
+
+.num{
+    color:#4e4e57;
+    font-size:10px;
+    font-weight:900;
+}
+
+.feature h3{
+    font-size:13px;
+    margin-bottom:6px;
+}
+
+.feature p{
+    color:#6e6e78;
+    font-size:10px;
+    line-height:1.6;
+}
+
+/* FOOTER */
+
+footer{
+    padding:28px 0 35px;
+    color:#4e4e57;
+    font-size:10px;
+    text-align:center;
+}
+
+/* MOBILE */
+
+@media(max-width:680px){
+
+    .container{
+        width:calc(100% - 24px);
+    }
+
+    .nav{
+        height:67px;
+    }
+
+    .brand-name{
+        font-size:18px;
+    }
+
+    .badge{
+        font-size:9px;
+    }
+
+    .hero{
+        padding:65px 0 35px;
+    }
+
+    h1{
+        font-size:44px;
+        letter-spacing:-3.5px;
+    }
+
+    .subtitle{
+        font-size:13px;
+    }
+
+    .input-card{
+        flex-direction:column;
+    }
+
+    .input-box{
+        width:100%;
+    }
+
+    .paste{
+        display:none;
+    }
+
+    .download{
+        width:100%;
+        height:55px;
+    }
+
+    .result-main{
+        padding:13px;
+        gap:11px;
+    }
+
+    .thumbnail{
+        width:105px;
+        height:105px;
+        flex-basis:105px;
+    }
+
+    .title{
+        font-size:14px;
+    }
+
+    .ready{
+        font-size:8px;
+    }
+
+    .format{
+        padding:0 13px 13px;
+    }
+
+    .features{
+        grid-template-columns:1fr;
+    }
+
+    .feature{
+        padding:21px 17px;
+    }
+
+    .feature + .feature{
+        border-left:0;
+        border-top:1px solid var(--border);
+    }
+}
+
+@media(max-width:390px){
+
+    h1{
+        font-size:40px;
+    }
+
+    .thumbnail{
+        width:90px;
+        height:90px;
+        flex-basis:90px;
+    }
+
+    .title{
+        font-size:13px;
+    }
+}
+</style></head><body><div class="container"><!-- NAV -->
+<nav class="nav">
+
+    <a class="brand" href="/">
+
+        <div class="logo">
+            <svg viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle
+                    cx="17.2"
+                    cy="6.8"
+                    r="1"
+                    fill="white"
+                    stroke="none"
+                />
+            </svg>
+        </div>
+
+        <span class="brand-name">
+            PaceFetch
         </span>
 
-    </header>
+    </a>
+
+    <div class="badge">
+        <span class="badge-dot"></span>
+        Instagram Only
+    </div>
+
+</nav>
 
 
-    <main>
+<!-- HERO -->
+<section class="hero">
 
-        <section class="hero">
+    <div class="eyebrow">
 
-            <div class="badge">
-                <span class="dot"></span>
-                Instagram Downloader
-            </div>
+        <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+        >
+            <rect x="3" y="3" width="18" height="18" rx="5"/>
+            <circle cx="12" cy="12" r="4"/>
+            <circle cx="17" cy="7" r="1"/>
+        </svg>
+
+        INSTAGRAM DOWNLOADER
+
+    </div>
 
 
-            <h1>
-                Download Instagram
-                <span>videos & photos.</span>
-            </h1>
+    <h1>
+        Download Instagram
+        <span class="gradient">
+            your way.
+        </span>
+    </h1>
 
 
-            <p class="subtitle">
-                Paste an Instagram post, Reel or video link below
-                and download it quickly with PaceFetch.
-            </p>
+    <p class="subtitle">
+        Paste an Instagram Reel, video or photo link
+        and download the available media quickly with
+        PaceFetch.
+    </p>
 
 
-            <div class="download-card">
+    <!-- DOWNLOADER -->
 
-                <div class="input-wrapper">
+    <div class="downloader">
 
-                    <span class="link-icon">
-                        ↗
-                    </span>
+        <div class="input-card">
 
-                    <input
-                        id="urlInput"
-                        type="url"
-                        placeholder="Paste Instagram URL here..."
-                        autocomplete="off"
-                        spellcheck="false"
-                    >
+            <div class="input-box">
 
-                    <button
-                        id="clearBtn"
-                        class="clear-btn"
-                        type="button"
-                    >
-                        ×
-                    </button>
+                <div class="ig-icon">
+
+                    <svg viewBox="0 0 24 24" fill="none">
+
+                        <defs>
+                            <linearGradient
+                                id="instagramGradient"
+                                x1="0"
+                                y1="0"
+                                x2="1"
+                                y2="1"
+                            >
+                                <stop offset="0" stop-color="#ffdc80"/>
+                                <stop offset=".3" stop-color="#f77737"/>
+                                <stop offset=".6" stop-color="#e1306c"/>
+                                <stop offset="1" stop-color="#833ab4"/>
+                            </linearGradient>
+                        </defs>
+
+                        <rect
+                            x="3"
+                            y="3"
+                            width="18"
+                            height="18"
+                            rx="5"
+                            stroke="url(#instagramGradient)"
+                            stroke-width="2"
+                        />
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="4"
+                            stroke="url(#instagramGradient)"
+                            stroke-width="2"
+                        />
+
+                        <circle
+                            cx="17"
+                            cy="7"
+                            r="1.1"
+                            fill="#e1306c"
+                        />
+
+                    </svg>
 
                 </div>
 
 
-                <button
-                    id="downloadBtn"
-                    class="download-btn"
-                    type="button"
+                <input
+                    id="url"
+                    type="url"
+                    placeholder="Paste Instagram URL..."
+                    autocomplete="off"
+                    spellcheck="false"
                 >
 
-                    <span id="downloadIcon">
-                        ↓
-                    </span>
 
-                    <span id="downloadText">
-                        Download
-                    </span>
-
+                <button
+                    id="paste"
+                    class="paste"
+                    type="button"
+                >
+                    Paste
                 </button>
 
             </div>
 
 
-            <div
-                id="message"
-                class="message"
-            ></div>
+            <button
+                id="download"
+                class="download"
+                type="button"
+            >
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path d="M12 3v12"/>
+                    <path d="m7 10 5 5 5-5"/>
+                    <path d="M5 21h14"/>
+                </svg>
+
+                Download
+
+            </button>
+
+        </div>
 
 
-            <div class="supported">
+        <div
+            id="status"
+            class="status"
+        >
+            Supports Instagram links only
+        </div>
 
-                <div class="support-icon">
-                    ◎
+
+        <!-- RESULT -->
+
+        <div
+            id="result"
+            class="result"
+        >
+
+            <div class="result-main">
+
+                <div
+                    id="thumbnail"
+                    class="thumbnail empty"
+                >
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                    >
+                        <rect
+                            x="3"
+                            y="4"
+                            width="18"
+                            height="16"
+                            rx="3"
+                        />
+                        <circle
+                            cx="8"
+                            cy="9"
+                            r="1.5"
+                        />
+                        <path
+                            d="m4 17 5-5 4 4 2-2 5 4"
+                        />
+                    </svg>
+
                 </div>
 
-                <div>
 
-                    <strong>
-                        Instagram only
-                    </strong>
+                <div class="info">
 
-                    <span>
-                        Reels, videos, photos and public posts
-                    </span>
+                    <div class="ready">
+                        ✓ READY
+                    </div>
+
+                    <div
+                        id="title"
+                        class="title"
+                    >
+                        Instagram media
+                    </div>
+
+                    <div class="meta">
+
+                        <span id="type">
+                            Instagram
+                        </span>
+
+                        <span>
+                            High Quality
+                        </span>
+
+                        <span id="duration" style="display:none">
+                        </span>
+
+                    </div>
 
                 </div>
 
             </div>
 
-        </section>
 
+            <div class="format">
 
-        <section class="features">
-
-            <div class="feature">
-
-                <div class="feature-number">
-                    01
+                <div class="format-label">
+                    AVAILABLE FORMAT
                 </div>
 
-                <div>
 
-                    <h3>
-                        Paste
-                    </h3>
+                <div class="format-card">
 
-                    <p>
-                        Copy the URL of the Instagram post or Reel.
-                    </p>
+                    <div class="format-icon">
 
-                </div>
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path d="M4 5h16v14H4z"/>
+                            <path d="m10 9 5 3-5 3V9Z"/>
+                        </svg>
 
-            </div>
-
-
-            <div class="feature">
-
-                <div class="feature-number">
-                    02
-                </div>
-
-                <div>
-
-                    <h3>
-                        Fetch
-                    </h3>
-
-                    <p>
-                        PaceFetch retrieves the available media.
-                    </p>
-
-                </div>
-
-            </div>
+                    </div>
 
 
-            <div class="feature">
+                    <div class="format-info">
 
-                <div class="feature-number">
-                    03
-                </div>
+                        <div
+                            id="formatName"
+                            class="format-name"
+                        >
+                            MP4 Video
+                        </div>
 
-                <div>
+                        <div
+                            id="formatDesc"
+                            class="format-desc"
+                        >
+                            High quality Instagram media
+                        </div>
 
-                    <h3>
+                    </div>
+
+
+                    <button
+                        id="save"
+                        class="save"
+                        type="button"
+                    >
                         Download
-                    </h3>
-
-                    <p>
-                        Save the media directly to your device.
-                    </p>
+                    </button>
 
                 </div>
 
             </div>
 
-        </section>
+        </div>
+
+    </div>
+
+</section>
 
 
-        <section class="how-section">
+<!-- FEATURES -->
 
-            <div class="section-label">
-                HOW IT WORKS
-            </div>
+<section class="features">
 
-            <h2>
-                Simple. Fast. Focused.
-            </h2>
+    <div class="feature">
 
+        <div class="num">01</div>
+
+        <div>
+            <h3>Paste</h3>
             <p>
-                PaceFetch is intentionally built for Instagram
-                instead of trying to support every social network.
+                Copy a public Instagram link
+                and paste it above.
             </p>
-
-        </section>
-
-    </main>
-
-
-    <footer>
-
-        <div>
-            © <span id="year"></span> PaceFetch
         </div>
 
+    </div>
+
+
+    <div class="feature">
+
+        <div class="num">02</div>
+
         <div>
-            Instagram Downloader
+            <h3>Fetch</h3>
+            <p>
+                PaceFetch finds the available
+                Instagram media.
+            </p>
         </div>
 
-    </footer>
-
-</div>
+    </div>
 
 
-<script>
+    <div class="feature">
 
-    /*
-     * ==========================================
-     * PACEFETCH FRONTEND
-     * ==========================================
-     */
+        <div class="num">03</div>
 
+        <div>
+            <h3>Save</h3>
+            <p>
+                Download the media directly
+                to your device.
+            </p>
+        </div>
 
-    const urlInput =
-        document.getElementById("urlInput");
+    </div>
 
-    const downloadBtn =
-        document.getElementById("downloadBtn");
-
-    const downloadText =
-        document.getElementById("downloadText");
-
-    const downloadIcon =
-        document.getElementById("downloadIcon");
-
-    const clearBtn =
-        document.getElementById("clearBtn");
-
-    const message =
-        document.getElementById("message");
+</section>
 
 
-    document.getElementById("year")
-        .textContent =
-        new Date().getFullYear();
+<footer>
+    © <span id="year"></span> PaceFetch · Instagram Downloader
+</footer>
+
+</div><script>
+
+/*
+==========================================================
+PACEFETCH FRONTEND
+==========================================================
+*/
 
 
-    /*
-     * ==========================================
-     * AD URL
-     * ==========================================
-     *
-     * REPLACE THIS with your actual ad
-     * destination URL.
-     */
+const urlInput =
+    document.getElementById("url");
 
-    const AD_URL =
-        "https://example.com";
+const downloadButton =
+    document.getElementById("download");
+
+const pasteButton =
+    document.getElementById("paste");
+
+const statusBox =
+    document.getElementById("status");
+
+const result =
+    document.getElementById("result");
+
+const titleBox =
+    document.getElementById("title");
+
+const typeBox =
+    document.getElementById("type");
+
+const durationBox =
+    document.getElementById("duration");
+
+const thumbnailBox =
+    document.getElementById("thumbnail");
+
+const formatName =
+    document.getElementById("formatName");
+
+const formatDesc =
+    document.getElementById("formatDesc");
+
+const saveButton =
+    document.getElementById("save");
 
 
-    /*
-     * ==========================================
-     * CHECK INSTAGRAM URL
-     * ==========================================
-     */
-
-    function isInstagramUrl(value) {
-
-        try {
-
-            const url =
-                new URL(value);
-
-            const hostname =
-                url.hostname
-                    .toLowerCase()
-                    .replace(/^www\./, "");
+document.getElementById("year").textContent =
+    new Date().getFullYear();
 
 
-            return (
-                hostname === "instagram.com" ||
-                hostname.endsWith(".instagram.com")
-            );
+/*
+==========================================================
+ADSTERra SCRIPTS
+==========================================================
 
-        } catch {
+The scripts are loaded only when the first Download
+button click happens.
 
+This keeps the normal PaceFetch interface clean.
+==========================================================
+*/
+
+const AD_SCRIPTS = [
+
+    "https://pl31140451.profitableratecpmnetwork.com/ec/ed/ce/ecedce7319274bc42cad5c1498ab4713.js",
+
+    "https://pl31140452.profitableratecpmnetwork.com/f2/00/93/f200938575e3a5367e3e7897cdf23754.js"
+
+];
+
+
+let adActivated =
+    sessionStorage.getItem(
+        "pacefetch_ad_activated"
+    ) === "1";
+
+
+let currentMediaUrl = "";
+
+let currentFilename =
+    "PaceFetch-download.mp4";
+
+
+/*
+==========================================================
+INSTAGRAM VALIDATION
+==========================================================
+*/
+
+function isInstagramUrl(value){
+
+    try{
+
+        const parsed =
+            new URL(value);
+
+        if(
+            parsed.protocol !== "https:" &&
+            parsed.protocol !== "http:"
+        ){
             return false;
-
         }
 
-    }
+        const hostname =
+            parsed.hostname
+                .toLowerCase()
+                .replace(/^www\./,"");
 
-
-    /*
-     * ==========================================
-     * MESSAGE
-     * ==========================================
-     */
-
-    function showMessage(
-        text,
-        type = ""
-    ) {
-
-        message.textContent = text;
-
-        message.className =
-            "message " + type;
-
-    }
-
-
-    /*
-     * ==========================================
-     * LOADING STATE
-     * ==========================================
-     */
-
-    function setLoading(
-        loading
-    ) {
-
-        if (loading) {
-
-            downloadBtn.classList.add(
-                "loading"
-            );
-
-            downloadText.textContent =
-                "Fetching...";
-
-            downloadIcon.textContent =
-                "⟳";
-
-        } else {
-
-            downloadBtn.classList.remove(
-                "loading"
-            );
-
-            downloadText.textContent =
-                "Download";
-
-            downloadIcon.textContent =
-                "↓";
-
-        }
-
-    }
-
-
-    /*
-     * ==========================================
-     * CLEAR BUTTON
-     * ==========================================
-     */
-
-    urlInput.addEventListener(
-        "input",
-        () => {
-
-            clearBtn.style.display =
-                urlInput.value.trim()
-                    ? "block"
-                    : "none";
-
-            showMessage("");
-
-        }
-    );
-
-
-    clearBtn.addEventListener(
-        "click",
-        () => {
-
-            urlInput.value = "";
-
-            clearBtn.style.display =
-                "none";
-
-            showMessage("");
-
-            urlInput.focus();
-
-        }
-    );
-
-
-    /*
-     * ==========================================
-     * FIRST AD REDIRECT
-     * ==========================================
-     */
-
-    function firstAdRedirect() {
-
-        sessionStorage.setItem(
-            "pacefetch_ad_seen",
-            "1"
+        return (
+            hostname === "instagram.com" ||
+            hostname.endsWith(".instagram.com")
         );
 
+    }catch{
 
-        const returnUrl =
-            window.location.origin +
-            "/?ad_return=1";
-
-
-        let destination =
-            AD_URL;
-
-
-        try {
-
-            const ad =
-                new URL(AD_URL);
-
-
-            ad.searchParams.set(
-                "url",
-                returnUrl
-            );
-
-
-            destination =
-                ad.toString();
-
-        } catch {
-
-            destination =
-                AD_URL;
-
-        }
-
-
-        window.location.href =
-            destination;
+        return false;
 
     }
 
+}
 
-    /*
-     * ==========================================
-     * FETCH FROM BACKEND
-     * ==========================================
-     */
 
-    async function fetchMedia(
-        instagramUrl
-    ) {
-
-        const response =
-            await fetch(
-                "/api/download?url=" +
-                encodeURIComponent(
-                    instagramUrl
-                ),
-                {
-                    method: "GET",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
-                }
-            );
-
-
-        let data;
-
-
-        try {
-
-            data =
-                await response.json();
-
-        } catch {
-
-            throw new Error(
-                "The server returned an invalid response."
-            );
-
-        }
-
-
-        if (
-            !response.ok ||
-            !data.success
-        ) {
-
-            throw new Error(
-                data.error ||
-                "Unable to fetch this Instagram post."
-            );
-
-        }
-
-
-        return data;
-
-    }
-
-
-    /*
-     * ==========================================
-     * START DOWNLOAD
-     * ==========================================
-     */
-
-    function startBrowserDownload(
-        mediaUrl,
-        filename
-    ) {
-
-        const link =
-            document.createElement("a");
-
-
-        link.href =
-            mediaUrl;
-
-
-        link.download =
-            filename ||
-            "PaceFetch-download";
-
-
-        link.target =
-            "_blank";
-
-
-        link.rel =
-            "noopener";
-
-
-        document.body.appendChild(
-            link
-        );
-
-
-        link.click();
-
-
-        link.remove();
-
-    }
-
-
-    /*
-     * ==========================================
-     * MAIN DOWNLOAD BUTTON
-     * ==========================================
-     */
-
-    downloadBtn.addEventListener(
-        "click",
-        async () => {
-
-            const instagramUrl =
-                urlInput.value.trim();
-
-
-            /*
-             * Empty input
-             */
-
-            if (!instagramUrl) {
-
-                showMessage(
-                    "Paste an Instagram URL first.",
-                    "error"
-                );
-
-                urlInput.focus();
-
-                return;
-
-            }
-
-
-            /*
-             * Instagram only
-             */
-
-            if (
-                !isInstagramUrl(
-                    instagramUrl
-                )
-            ) {
-
-                showMessage(
-                    "PaceFetch only supports Instagram URLs.",
-                    "error"
-                );
-
-                return;
-
-            }
-
-
-            /*
-             * Has the first ad
-             * already been completed?
-             */
-
-            const adSeen =
-                sessionStorage.getItem(
-                    "pacefetch_ad_seen"
-                );
-
-
-            const returnedFromAd =
-                new URLSearchParams(
-                    window.location.search
-                ).get(
-                    "ad_return"
-                );
-
-
-            /*
-             * FIRST CLICK
-             */
-
-            if (
-                !adSeen &&
-                !returnedFromAd
-            ) {
-
-                showMessage(
-                    "One quick step before your download..."
-                );
-
-
-                setTimeout(
-                    firstAdRedirect,
-                    350
-                );
-
-
-                return;
-
-            }
-
-
-            /*
-             * Unlock downloader
-             */
-
-            sessionStorage.setItem(
-                "pacefetch_ad_seen",
-                "1"
-            );
-
-
-            /*
-             * ACTUAL BACKEND REQUEST
-             */
-
-            try {
-
-                setLoading(true);
-
-
-                showMessage(
-                    "Connecting to Instagram..."
-                );
-
-
-                const data =
-                    await fetchMedia(
-                        instagramUrl
-                    );
-
-
-                if (
-                    !data.media_url
-                ) {
-
-                    throw new Error(
-                        "No downloadable media was found."
-                    );
-
-                }
-
-
-                showMessage(
-                    "Your download is ready.",
-                    "success"
-                );
-
-
-                /*
-                 * Actual download
-                 */
-
-                startBrowserDownload(
-                    data.media_url,
-                    data.filename
-                );
-
-
-                /*
-                 * Subsequent click:
-                 * open ad separately.
-                 */
-
-                if (
-                    AD_URL &&
-                    !AD_URL.includes(
-                        "example.com"
-                    )
-                ) {
-
-                    window.open(
-                        AD_URL,
-                        "_blank",
-                        "noopener,noreferrer"
-                    );
-
-                }
-
-            } catch (error) {
-
-                console.error(
-                    "PaceFetch:",
-                    error
-                );
-
-
-                showMessage(
-                    error.message ||
-                    "Something went wrong. Please try again.",
-                    "error"
-                );
-
-            } finally {
-
-                setLoading(false);
-
-            }
-
-        }
-    );
-
-
-    /*
-     * ==========================================
-     * ENTER KEY
-     * ==========================================
-     */
-
-    urlInput.addEventListener(
-        "keydown",
-        event => {
-
-            if (
-                event.key === "Enter"
-            ) {
-
-                event.preventDefault();
-
-                downloadBtn.click();
-
-            }
-
-        }
-    );
-
-
-    /*
-     * ==========================================
-     * RETURN FROM AD
-     * ==========================================
-     */
-
-    if (
-        new URLSearchParams(
-            window.location.search
-        ).get(
-            "ad_return"
-        )
-    ) {
-
-        sessionStorage.setItem(
-            "pacefetch_ad_seen",
-            "1"
-        );
-
-
-        window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname
-        );
-
-
-        showMessage(
-            "You're back. Paste your Instagram link and download.",
-            "success"
-        );
-
-    }
-
-</script>
-
-</body>
-</html>
+/*
+==========================================================
+URL DETECTION
+==================
