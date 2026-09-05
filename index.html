@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PaceFetch — Instagram Downloader</title>
+
+    <meta
+        name="description"
+        content="PaceFetch — fast Instagram video and photo downloader."
+    >
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #070709;
+            --card: #111116;
+            --text: #ffffff;
+            --muted: #96969f;
+            --border: rgba(255,255,255,.09);
+            --accent: #ff3159;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(
+                    circle at 50% -10%,
+                    rgba(255,45,85,.15),
+                    transparent 38%
+                ),
+                var(--bg);
+
+            color: var(--text);
+
+            font-family:
+                Inter,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+
+            background-image:
+                linear-gradient(
+                    rgba(255,255,255,.018) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(255,255,255,.018) 1px,
+                    transparent 1px
+                );
+
+            background-size: 50px 50px;
+
+            mask-image:
+                linear-gradient(
+                    to bottom,
+                    black,
+                    transparent 80%
+                );
+        }
+
+        .page {
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* NAVBAR */
+
+        .navbar {
+            width: min(1120px, calc(100% - 40px));
+            height: 82px;
+            margin: auto;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            color: white;
+            text-decoration: none;
+
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 11px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ffdc80,
+                    #fcaf45 25%,
+                    #f77737 45%,
+                    #e1306c 65%,
+                    #c13584 80%,
+                    #833ab4
+                );
+
+            font-weight: 900;
+
+            box-shadow:
+                0 8px 25px rgba(225,48,108,.25);
+        }
+
+        .instagram-only {
+            padding: 8px 13px;
+
+            border: 1px solid var(--border);
+            border-radius: 100px;
+
+            background: rgba(255,255,255,.035);
+
+            color: #bdbdc6;
+
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* HERO */
+
+        .hero {
+            width: min(900px, calc(100% - 40px));
+
+            margin: 105px auto 0;
+
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+
+            margin-bottom: 25px;
+            padding: 8px 13px;
+
+            border: 1px solid rgba(255,45,85,.25);
+            border-radius: 100px;
+
+            background: rgba(255,45,85,.07);
+
+            color: #ff8ca4;
+
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+
+            border-radius: 50%;
+
+            background: #ff3b63;
+
+            box-shadow:
+                0 0 12px #ff3b63;
+        }
+
+        h1 {
+            max-width: 850px;
+            margin: auto;
+
+            font-size: clamp(48px, 8vw, 88px);
+            line-height: .98;
+
+            letter-spacing: -5px;
+            font-weight: 900;
+        }
+
+        h1 span {
+            display: block;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #ffb067,
+                    #ff4675,
+                    #c57cff
+                );
+
+            -webkit-background-clip: text;
+            background-clip: text;
+
+            color: transparent;
+        }
+
+        .subtitle {
+            max-width: 600px;
+
+            margin: 28px auto 40px;
+
+            color: var(--muted);
+
+            font-size: 17px;
+            line-height: 1.65;
+        }
+
+        /* DOWNLOAD BOX */
+
+        .download-card {
+            width: min(720px, 100%);
+
+            margin: auto;
+            padding: 9px;
+
+            display: flex;
+            gap: 9px;
+
+            border: 1px solid rgba(255,255,255,.11);
+            border-radius: 18px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255,255,255,.065),
+                    rgba(255,255,255,.025)
+                );
+
+            box-shadow:
+                0 30px 90px rgba(0,0,0,.45);
+        }
+
+        .input-wrapper {
+            flex: 1;
+            min-width: 0;
+
+            height: 58px;
+
+            display: flex;
+            align-items: center;
+
+            padding: 0 16px;
+
+            background: #0c0c10;
+
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .link-icon {
+            margin-right: 10px;
+
+            color: #777780;
+
+            font-size: 21px;
+        }
+
+        #urlInput {
+            flex: 1;
+            width: 100%;
+
+            border: none;
+            outline: none;
+
+            background: transparent;
+
+            color: white;
+
+            font-size: 15px;
+        }
+
+        #urlInput::placeholder {
+            color: #65656d;
+        }
+
+        .clear-btn {
+            display: none;
+
+            border: none;
+            background: transparent;
+
+            color: #777780;
+
+            font-size: 23px;
+
+            cursor: pointer;
+        }
+
+        .download-btn {
+            min-width: 155px;
+            height: 58px;
+
+            border: none;
+            border-radius: 12px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ff3159,
+                    #e82c71
+                );
+
+            color: white;
+
+            font-size: 15px;
+            font-weight: 800;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 10px 35px rgba(255,45,85,.25);
+
+            transition: .2s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 15px 40px rgba(255,45,85,.36);
+        }
+
+        .download-btn:active {
+            transform: scale(.98);
+        }
+
+        .download-btn.loading {
+            opacity: .7;
+            pointer-events: none;
+        }
+
+        .message {
+            min-height: 25px;
+
+            margin-top: 15px;
+
+            font-size: 13px;
+
+            color: #a9a9b1;
+        }
+
+        .message.error {
+            color: #ff7389;
+        }
+
+        .message.success {
+            color: #70e2a4;
+        }
+
+        .supported {
+            width: min(720px, 100%);
+
+            margin: 18px auto 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            gap: 11px;
+
+            color: #777780;
+
+            font-size: 12px;
+        }
+
+        .supported strong {
+            display: block;
+
+            margin-bottom: 2px;
+
+            color: #aaaab2;
+        }
+
+        .supported span {
+            display: block;
+        }
+
+        .support-icon {
+            width: 32px;
+            height: 32px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 9px;
+
+            background: rgba(255,255,255,.05);
+
+            color: #aaaab2;
+
+            font-size: 18px;
+        }
+
+        /* FEATURES */
+
+        .features {
+            width: min(1000px, calc(100% - 40px));
+
+            margin: 120px auto 0;
+
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .feature {
+            padding: 34px 30px;
+
+            display: flex;
+            gap: 18px;
+        }
+
+        .feature + .feature {
+            border-left: 1px solid var(--border);
+        }
+
+        .feature-number {
+            color: #55555e;
+
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .feature h3 {
+            margin-bottom: 8px;
+
+            font-size: 15px;
+        }
+
+        .feature p {
+            color: #777780;
+
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* HOW */
+
+        .how-section {
+            width: min(800px, calc(100% - 40px));
+
+            margin: 120px auto;
+
+            text-align: center;
+        }
+
+        .section-label {
+            margin-bottom: 18px;
+
+            color: #777780;
+
+            font-size: 11px;
+            font-weight: 800;
+
+            letter-spacing: 2px;
+        }
+
+        .how-section h2 {
+            margin-bottom: 16px;
+
+            font-size: clamp(32px,5vw,52px);
+
+            letter-spacing: -2px;
+        }
+
+        .how-section p {
+            color: var(--muted);
+
+            line-height: 1.7;
+        }
+
+        /* FOOTER */
+
+        footer {
+            width: min(1120px, calc(100% - 40px));
+
+            margin: auto;
+            padding: 28px 0;
+
+            display: flex;
+            justify-content: space-between;
+
+            border-top: 1px solid var(--border);
+
+            color: #55555e;
+
+            font-size: 11px;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 700px) {
+
+            .navbar {
+                height: 70px;
+            }
+
+            .instagram-only {
+                display: none;
+            }
+
+            .hero {
+                margin-top: 75px;
+            }
+
+            h1 {
+                letter-spacing: -3px;
+            }
+
+            .subtitle {
+                font-size: 15px;
+            }
+
+            .download-card {
+                flex-direction: column;
+            }
+
+            .download-btn {
+                width: 100%;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+
+                margin-top: 80px;
+            }
+
+            .feature {
+                padding: 25px 20px;
+            }
+
+            .feature + .feature {
+                border-left: none;
+                border-top: 1px solid var(--border);
+            }
+
+            .how-section {
+                margin: 85px auto;
+            }
+
+            footer {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+
+<div class="page">
+
+    <header class="navbar">
+
+        <a href="/" class="brand">
+
+            <span class="brand-icon">
+                P
+            </span>
+
+            <span>
+                PaceFetch
+            </span>
+
+        </a>
+
+        <span class="instagram-only">
+            Instagram Only
+        </span>
+
+    </header>
+
+
+    <main>
+
+        <section class="hero">
+
+            <div class="badge">
+                <span class="dot"></span>
+                Instagram Downloader
+            </div>
+
+
+            <h1>
+                Download Instagram
+                <span>videos & photos.</span>
+            </h1>
+
+
+            <p class="subtitle">
+                Paste an Instagram post, Reel or video link below
+                and download it quickly with PaceFetch.
+            </p>
+
+
+            <div class="download-card">
+
+                <div class="input-wrapper">
+
+                    <span class="link-icon">
+                        ↗
+                    </span>
+
+                    <input
+                        id="urlInput"
+                        type="url"
+                        placeholder="Paste Instagram URL here..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+
+                    <button
+                        id="clearBtn"
+                        class="clear-btn"
+                        type="button"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                <button
+                    id="downloadBtn"
+                    class="download-btn"
+                    type="button"
+                >
+
+                    <span id="downloadIcon">
+                        ↓
+                    </span>
+
+                    <span id="downloadText">
+                        Download
+                    </span>
+
+                </button>
+
+            </div>
+
+
+            <div
+                id="message"
+                class="message"
+            ></div>
+
+
+            <div class="supported">
+
+                <div class="support-icon">
+                    ◎
+                </div>
+
+                <div>
+
+                    <strong>
+                        Instagram only
+                    </strong>
+
+                    <span>
+                        Reels, videos, photos and public posts
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="features">
+
+            <div class="feature">
+
+                <div class="feature-number">
+                    01
+                </div>
+
+                <div>
+
+                    <h3>
+                        Paste
+                    </h3>
+
+                    <p>
+                        Copy the URL of the Instagram post or Reel.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="feature">
+
+                <div class="feature-number">
+                    02
+                </div>
+
+                <div>
+
+                    <h3>
+                        Fetch
+                    </h3>
+
+                    <p>
+                        PaceFetch retrieves the available media.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="feature">
+
+                <div class="feature-number">
+                    03
+                </div>
+
+                <div>
+
+                    <h3>
+                        Download
+                    </h3>
+
+                    <p>
+                        Save the media directly to your device.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="how-section">
+
+            <div class="section-label">
+                HOW IT WORKS
+            </div>
+
+            <h2>
+                Simple. Fast. Focused.
+            </h2>
+
+            <p>
+                PaceFetch is intentionally built for Instagram
+                instead of trying to support every social network.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+
+        <div>
+            © <span id="year"></span> PaceFetch
+        </div>
+
+        <div>
+            Instagram Downloader
+        </div>
+
+    </footer>
+
+</div>
+
+
+<script>
+
+    /*
+     * ==========================================
+     * PACEFETCH FRONTEND
+     * ==========================================
+     */
+
+
+    const urlInput =
+        document.getElementById("urlInput");
+
+    const downloadBtn =
+        document.getElementById("downloadBtn");
+
+    const downloadText =
+        document.getElementById("downloadText");
+
+    const downloadIcon =
+        document.getElementById("downloadIcon");
+
+    const clearBtn =
+        document.getElementById("clearBtn");
+
+    const message =
+        document.getElementById("message");
+
+
+    document.getElementById("year")
+        .textContent =
+        new Date().getFullYear();
+
+
+    /*
+     * ==========================================
+     * AD URL
+     * ==========================================
+     *
+     * REPLACE THIS with your actual ad
+     * destination URL.
+     */
+
+    const AD_URL =
+        "https://example.com";
+
+
+    /*
+     * ==========================================
+     * CHECK INSTAGRAM URL
+     * ==========================================
+     */
+
+    function isInstagramUrl(value) {
+
+        try {
+
+            const url =
+                new URL(value);
+
+            const hostname =
+                url.hostname
+                    .toLowerCase()
+                    .replace(/^www\./, "");
+
+
+            return (
+                hostname === "instagram.com" ||
+                hostname.endsWith(".instagram.com")
+            );
+
+        } catch {
+
+            return false;
+
+        }
+
+    }
+
+
+    /*
+     * ==========================================
+     * MESSAGE
+     * ==========================================
+     */
+
+    function showMessage(
+        text,
+        type = ""
+    ) {
+
+        message.textContent = text;
+
+        message.className =
+            "message " + type;
+
+    }
+
+
+    /*
+     * ==========================================
+     * LOADING STATE
+     * ==========================================
+     */
+
+    function setLoading(
+        loading
+    ) {
+
+        if (loading) {
+
+            downloadBtn.classList.add(
+                "loading"
+            );
+
+            downloadText.textContent =
+                "Fetching...";
+
+            downloadIcon.textContent =
+                "⟳";
+
+        } else {
+
+            downloadBtn.classList.remove(
+                "loading"
+            );
+
+            downloadText.textContent =
+                "Download";
+
+            downloadIcon.textContent =
+                "↓";
+
+        }
+
+    }
+
+
+    /*
+     * ==========================================
+     * CLEAR BUTTON
+     * ==========================================
+     */
+
+    urlInput.addEventListener(
+        "input",
+        () => {
+
+            clearBtn.style.display =
+                urlInput.value.trim()
+                    ? "block"
+                    : "none";
+
+            showMessage("");
+
+        }
+    );
+
+
+    clearBtn.addEventListener(
+        "click",
+        () => {
+
+            urlInput.value = "";
+
+            clearBtn.style.display =
+                "none";
+
+            showMessage("");
+
+            urlInput.focus();
+
+        }
+    );
+
+
+    /*
+     * ==========================================
+     * FIRST AD REDIRECT
+     * ==========================================
+     */
+
+    function firstAdRedirect() {
+
+        sessionStorage.setItem(
+            "pacefetch_ad_seen",
+            "1"
+        );
+
+
+        const returnUrl =
+            window.location.origin +
+            "/?ad_return=1";
+
+
+        let destination =
+            AD_URL;
+
+
+        try {
+
+            const ad =
+                new URL(AD_URL);
+
+
+            ad.searchParams.set(
+                "url",
+                returnUrl
+            );
+
+
+            destination =
+                ad.toString();
+
+        } catch {
+
+            destination =
+                AD_URL;
+
+        }
+
+
+        window.location.href =
+            destination;
+
+    }
+
+
+    /*
+     * ==========================================
+     * FETCH FROM BACKEND
+     * ==========================================
+     */
+
+    async function fetchMedia(
+        instagramUrl
+    ) {
+
+        const response =
+            await fetch(
+                "/api/download?url=" +
+                encodeURIComponent(
+                    instagramUrl
+                ),
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
+                }
+            );
+
+
+        let data;
+
+
+        try {
+
+            data =
+                await response.json();
+
+        } catch {
+
+            throw new Error(
+                "The server returned an invalid response."
+            );
+
+        }
+
+
+        if (
+            !response.ok ||
+            !data.success
+        ) {
+
+            throw new Error(
+                data.error ||
+                "Unable to fetch this Instagram post."
+            );
+
+        }
+
+
+        return data;
+
+    }
+
+
+    /*
+     * ==========================================
+     * START DOWNLOAD
+     * ==========================================
+     */
+
+    function startBrowserDownload(
+        mediaUrl,
+        filename
+    ) {
+
+        const link =
+            document.createElement("a");
+
+
+        link.href =
+            mediaUrl;
+
+
+        link.download =
+            filename ||
+            "PaceFetch-download";
+
+
+        link.target =
+            "_blank";
+
+
+        link.rel =
+            "noopener";
+
+
+        document.body.appendChild(
+            link
+        );
+
+
+        link.click();
+
+
+        link.remove();
+
+    }
+
+
+    /*
+     * ==========================================
+     * MAIN DOWNLOAD BUTTON
+     * ==========================================
+     */
+
+    downloadBtn.addEventListener(
+        "click",
+        async () => {
+
+            const instagramUrl =
+                urlInput.value.trim();
+
+
+            /*
+             * Empty input
+             */
+
+            if (!instagramUrl) {
+
+                showMessage(
+                    "Paste an Instagram URL first.",
+                    "error"
+                );
+
+                urlInput.focus();
+
+                return;
+
+            }
+
+
+            /*
+             * Instagram only
+             */
+
+            if (
+                !isInstagramUrl(
+                    instagramUrl
+                )
+            ) {
+
+                showMessage(
+                    "PaceFetch only supports Instagram URLs.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * Has the first ad
+             * already been completed?
+             */
+
+            const adSeen =
+                sessionStorage.getItem(
+                    "pacefetch_ad_seen"
+                );
+
+
+            const returnedFromAd =
+                new URLSearchParams(
+                    window.location.search
+                ).get(
+                    "ad_return"
+                );
+
+
+            /*
+             * FIRST CLICK
+             */
+
+            if (
+                !adSeen &&
+                !returnedFromAd
+            ) {
+
+                showMessage(
+                    "One quick step before your download..."
+                );
+
+
+                setTimeout(
+                    firstAdRedirect,
+                    350
+                );
+
+
+                return;
+
+            }
+
+
+            /*
+             * Unlock downloader
+             */
+
+            sessionStorage.setItem(
+                "pacefetch_ad_seen",
+                "1"
+            );
+
+
+            /*
+             * ACTUAL BACKEND REQUEST
+             */
+
+            try {
+
+                setLoading(true);
+
+
+                showMessage(
+                    "Connecting to Instagram..."
+                );
+
+
+                const data =
+                    await fetchMedia(
+                        instagramUrl
+                    );
+
+
+                if (
+                    !data.media_url
+                ) {
+
+                    throw new Error(
+                        "No downloadable media was found."
+                    );
+
+                }
+
+
+                showMessage(
+                    "Your download is ready.",
+                    "success"
+                );
+
+
+                /*
+                 * Actual download
+                 */
+
+                startBrowserDownload(
+                    data.media_url,
+                    data.filename
+                );
+
+
+                /*
+                 * Subsequent click:
+                 * open ad separately.
+                 */
+
+                if (
+                    AD_URL &&
+                    !AD_URL.includes(
+                        "example.com"
+                    )
+                ) {
+
+                    window.open(
+                        AD_URL,
+                        "_blank",
+                        "noopener,noreferrer"
+                    );
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "PaceFetch:",
+                    error
+                );
+
+
+                showMessage(
+                    error.message ||
+                    "Something went wrong. Please try again.",
+                    "error"
+                );
+
+            } finally {
+
+                setLoading(false);
+
+            }
+
+        }
+    );
+
+
+    /*
+     * ==========================================
+     * ENTER KEY
+     * ==========================================
+     */
+
+    urlInput.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                event.preventDefault();
+
+                downloadBtn.click();
+
+            }
+
+        }
+    );
+
+
+    /*
+     * ==========================================
+     * RETURN FROM AD
+     * ==========================================
+     */
+
+    if (
+        new URLSearchParams(
+            window.location.search
+        ).get(
+            "ad_return"
+        )
+    ) {
+
+        sessionStorage.setItem(
+            "pacefetch_ad_seen",
+            "1"
+        );
+
+
+        window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+        );
+
+
+        showMessage(
+            "You're back. Paste your Instagram link and download.",
+            "success"
+        );
+
+    }
+
+</script>
+
+</body>
+</html>
